@@ -1,6 +1,12 @@
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
 import feedparser
-import dart.dart_api as dart
+from pymongo import MongoClient
+
+client = MongoClient('localhost', 27017)
+db = client.ncs
+collection = db.topic
+
+#import dart.dart_api as dart
 
 my_token = '930514973:AAFqVQtB7_igtP85tfAiZY_TVkIjgT0fKn4'
 topic = ""
@@ -26,7 +32,7 @@ def get_message(bot, update) :
 
 
 def help_command(bot, update) :
-    update.message.reply_text("명령어 목록?\n1. /subscribe: 구독\n2. /topic {args}: 구독할 topic\n3. dart 공시받기")
+    update.message.reply_text("명령어 목록?\n1. /subscribe: 구독\n2. /topic 키워드: 구독할 topic\n3. /delete 키워드: 삭제할 topic\n4. dart 공시받기")
 
 def subscribe_command(bot, update):
     update.message.reply_text("구독되었습니다. /topic명령어를 이용하여 topic을 추가하여주세요.")
@@ -35,18 +41,24 @@ def fss(bot, update, args):
     pass    
 
 def topic_add_command(bot, update, args):
-    topics = "구독한 topic:"
-    print(args)
-    for arg in args:
-        topics+= '\n - {}'.format(arg)
-    bot.send_message(chat_id=update.message.chat_id, text = topics)
-    for i in topic:
-        if i in RSS:
-            d = feedparser.parse(RSS[i])
-            for j in range(len(d['entries'])):
-                bot.send_message(chat_id=update.message.chat_id, text = d['entries'][j]['title'])
-                bot.send_message(chat_id=update.message.chat_id, text = d['entries'][j]['link'])
+	topics = "구독한 topic:"
+	topic_list = collection.find_one()['topic']
+	topic_list = list(set(topic_list+args))
+	collection.replace_one(collection.find_one(), {'topic':topic_list})
+	for arg in topic_list:
+		topics+= '\n - {}'.format(arg)
+	bot.send_message(chat_id=944628369, text = topics)
 
+def topic_sub_command(bot, update, args):
+	topic_list = collection.find_one()['topic']
+	for i in args:
+		try:
+			topic_list.remove(i)
+		except ValueError:
+			bot.send_message(chat_id=944628369, text="%s은(는) 구독하지 않은 토픽입니다."%i)
+			continue
+		bot.send_message(chat_id=944628369, text="%s은(는) 삭제되었습니다."%i)
+	collection.replace_one(collection.find_one(), {'topic':topic_list})
 
 #def print_news(bot, update, args):
  #   for i in topic:
@@ -62,6 +74,7 @@ updater = Updater(my_token)
 updater.dispatcher.add_handler(CommandHandler('help', help_command))
 updater.dispatcher.add_handler(CommandHandler('subscribe', subscribe_command))
 updater.dispatcher.add_handler(CommandHandler('topic', topic_add_command, pass_args=True)) 
-updater.dispatcher.add_handler(CommandHandler('dart', dart, pass_args=True))
+updater.dispatcher.add_handler(CommandHandler('delete', topic_sub_command, pass_args=True))
+#updater.dispatcher.add_handler(CommandHandler('dart', dart, pass_args=True))
 updater.start_polling(timeout=3, clean=True)
 updater.idle()
