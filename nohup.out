@@ -1,3 +1,0 @@
-telegram_bot_command.py:73: TelegramDeprecationWarning: Old Handler API is deprecated - see https://git.io/fxJuV for details
-  updater = Updater(my_token)
-start telegram chat bot
