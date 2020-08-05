@@ -5,7 +5,7 @@ import datetime
 import telegram
 import time
 recent = {}
-my_token = '1360343344:AAHukkz_iEoD1lutw7bj2uA1IzLjrwUOGO8'
+my_token = '930514973:AAFqVQtB7_igtP85tfAiZY_TVkIjgT0fKn4'
 bot = telegram.Bot(token=my_token)
 
 cli = MongoClient('localhost', 27017)
@@ -27,8 +27,10 @@ while 1:
 	for i in collection.find_one()['topic']:
 	#	try:
 		print(i)
+		print(today)
 		corp_code = get_number(i)
 		api = f"https://opendart.fss.or.kr/api/list.json?crtfc_key={api_key}&corp_code={corp_code}&bgn_de={today}"
+		print(api)
 		res = requests.get(api).json()
 		status = res['status']
 		if status == '013':
